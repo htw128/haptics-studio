@@ -111,8 +111,8 @@ module.exports = (webpackEnv, argv) => {
       alias: {
         // @oss-disable
         // @oss-disable
-          __dirname,// @oss-disable
-          '..',// @oss-disable
+          // @oss-disable
+          // @oss-disable
           // @oss-disable
         // @oss-disable
         HapticsSdkNapi: resolve(
