@@ -29,10 +29,6 @@ export interface ProgressInfo {
 }
 
 export default class Updater {
-  /**
-   * Static
-   * Unset a configuration element
-   */
   public static checkForUpdates(silent = true): void {
     return Updater.instance.checkForUpdates(silent);
   }
@@ -44,7 +40,7 @@ export default class Updater {
   private static singleton: Updater;
 
   /**
-   * Represents an instance of the application configurations handler
+   * Represents an instance of the application updater
    * @constructor
    * */
   constructor(enforcer: symbol) {
@@ -61,7 +57,9 @@ export default class Updater {
     autoUpdater.fullChangelog = true;
     autoUpdater.channel = getReleaseChannel();
     autoUpdater.allowDowngrade = false;
-    autoUpdater.setFeedURL(Constants.AUTO_UPDATER.FEED_URL);
+    if (Constants.AUTO_UPDATER.FEED_URL) {
+      autoUpdater.setFeedURL(Constants.AUTO_UPDATER.FEED_URL);
+    }
 
     autoUpdater.on('error', (error: Error) => {
       MainApplication.instance.sendToUI('update_error');
@@ -108,6 +106,10 @@ export default class Updater {
   // export this to MenuItem click callback
   public checkForUpdates = (silent = true): void => {
     const {app} = Configs.configs;
+    if (!Constants.AUTO_UPDATER.FEED_URL) {
+      Logger.info('Skipping the update check - FEED_URL not defined...');
+      return;
+    }
     if (app.env === 'production') {
       this.silent = silent;
       this.updateMenuItem('Updating...', false);

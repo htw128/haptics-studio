@@ -54,7 +54,7 @@ export default {
   },
   AUTO_UPDATER: {
     // @oss-disable
-    FEED_URL: '', // @oss-enable
+    FEED_URL: undefined, // @oss-enable
   },
   MENU: {
     HELP: [
