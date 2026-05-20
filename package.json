@@ -383,6 +383,7 @@
     "socks": "^2.8.3",
     "serialize-javascript": "^6.0.2",
     "flatted": "^3.4.2",
+    "ws": "^8.20.1",
     "**/electron-builder/app-builder-lib/**/tar": "7.5.3"
   }
 }
