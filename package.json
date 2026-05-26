@@ -386,6 +386,7 @@
     "ws": "^8.20.1",
     "@tootallnate/once": "^2.0.1",
     "qs": "^6.15.2",
+    "uuid": "^14.0.0",
     "**/electron-builder/app-builder-lib/**/tar": "7.5.3"
   }
 }
