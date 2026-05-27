@@ -381,7 +381,7 @@
     "@types/react": "17.0.2",
     "@types/react-dom": "17.0.2",
     "socks": "^2.8.3",
-    "serialize-javascript": "^6.0.2",
+    "serialize-javascript": "^7.0.5",
     "flatted": "^3.4.2",
     "ws": "^8.20.1",
     "@tootallnate/once": "^2.0.1",
