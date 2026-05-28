@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import {useDispatch} from 'react-redux';
 import {debounce, isEqual} from 'lodash';
 
@@ -111,6 +111,8 @@ function AudioAnalyzer() {
   }, []);
   const [settings, setSettings] = useState<ParameterValues>({});
   const [currentSettings, setCurrentSettings] = useState<ParameterValues>({});
+  const revertSettingsRef = useRef<ParameterValues | null>(null);
+  const audioAnalyzerChangeTick = selectors.app.getAudioAnalyzerChangeTick();
 
   useEffect(() => {
     if (currentClipId) {
@@ -118,8 +120,20 @@ function AudioAnalyzer() {
       const newSettings = {...defaultSettings, ...dsp};
       setSettings(newSettings);
       setCurrentSettings(newSettings);
+      // A new analyzed state landed: any pending revert is no longer relevant.
+      revertSettingsRef.current = null;
     }
   }, [currentClipId, dsp]);
+
+  // When the analyzer confirmation dialog is dismissed (cancel/X/Escape), roll
+  // the sliders back to the last analyzed values so the UI does not appear to
+  // have applied a change that was never committed.
+  useEffect(() => {
+    if (revertSettingsRef.current) {
+      setSettings(revertSettingsRef.current);
+      revertSettingsRef.current = null;
+    }
+  }, [audioAnalyzerChangeTick]);
 
   const onValuesCommit = debounce(
     (keys: string[], values: any | undefined, group: EnvelopeType) => {
@@ -137,6 +151,7 @@ function AudioAnalyzer() {
         haveSettingsChanged
       ) {
         if (selectedClips.length > 1) {
+          revertSettingsRef.current = currentSettings;
           dispatch(
             actions.app.showDialog({
               title: lang('editor.analysis-multiple'),
@@ -147,9 +162,11 @@ function AudioAnalyzer() {
                 settingsChange,
                 group,
               }),
+              cancelAction: actions.app.cancelAudioAnalyzerDialog(),
             }),
           );
         } else if (hasChanges[group]) {
+          revertSettingsRef.current = currentSettings;
           dispatch(
             actions.app.showDialog({
               title: lang('editor.analysis-confirm'),
@@ -160,6 +177,7 @@ function AudioAnalyzer() {
                 settingsChange,
                 group,
               }),
+              cancelAction: actions.app.cancelAudioAnalyzerDialog(),
             }),
           );
         } else {

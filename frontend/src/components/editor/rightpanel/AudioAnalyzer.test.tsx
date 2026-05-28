@@ -82,6 +82,7 @@ describe('<AudioAnalyzer />', () => {
           text: expect.anything(),
           confirmButton: expect.anything(),
           action,
+          cancelAction: actions.app.cancelAudioAnalyzerDialog(),
         }),
       );
     });

@@ -46,6 +46,9 @@ export default function Dialog(props: DialogProps): JSX.Element {
   const {actions, lang} = useContext(AppContext);
 
   const onDismiss = () => {
+    if (dialog.cancelAction) {
+      dispatch(dialog.cancelAction);
+    }
     dispatch(actions.app.dismissDialog());
   };
 

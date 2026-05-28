@@ -108,6 +108,9 @@ export const selectTelemetryState = (state: RootState): TelemetryConsentState =>
 export const selectIsAudioPlaying = (state: RootState): boolean =>
   state.app.isAudioPlaying;
 
+export const selectAudioAnalyzerChangeTick = (state: RootState): number =>
+  state.app.audioAnalyzerChangeTick;
+
 export default {
   getAppState() {
     return useSelector(selectAppState, shallowEqual);
@@ -224,5 +227,9 @@ export default {
 
   isAudioPlaying(): boolean {
     return useSelector(selectIsAudioPlaying);
+  },
+
+  getAudioAnalyzerChangeTick(): number {
+    return useSelector(selectAudioAnalyzerChangeTick);
   },
 };

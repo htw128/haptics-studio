@@ -407,6 +407,7 @@ export interface DialogState {
   text: string;
   confirmButton: string;
   action: AnyAction | undefined;
+  cancelAction?: AnyAction | undefined;
 }
 
 export interface UpdateInfo {

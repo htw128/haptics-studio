@@ -32,6 +32,7 @@ export interface UIState {
     status: ExportState;
   };
   isAudioPlaying: boolean;
+  audioAnalyzerChangeTick: number;
 }
 
 export const uiInitialState: UIState = {
@@ -54,6 +55,7 @@ export const uiInitialState: UIState = {
     status: 'none',
   },
   isAudioPlaying: false,
+  audioAnalyzerChangeTick: 0,
 };
 
 export const uiReducers = {
@@ -87,6 +89,7 @@ export const uiReducers = {
       text: string;
       confirmButton: string;
       action: AnyAction;
+      cancelAction?: AnyAction;
     }>,
   ) {
     state.dialog = {
@@ -95,11 +98,16 @@ export const uiReducers = {
       text: action.payload.text,
       confirmButton: action.payload.confirmButton,
       action: action.payload.action,
+      cancelAction: action.payload.cancelAction,
     };
   },
 
   dismissDialog(state: {dialog: DialogState}) {
     state.dialog = {...uiInitialState.dialog};
+  },
+
+  cancelAudioAnalyzerDialog(state: {audioAnalyzerChangeTick: number}) {
+    state.audioAnalyzerChangeTick += 1;
   },
 
   showContextMenu(
