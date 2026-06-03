@@ -339,7 +339,7 @@
     "@reduxjs/toolkit": "^1.9.5",
     "adm-zip": "0.5.10",
     "array-move": "3.0.0",
-    "axios": "0.31.1",
+    "axios": "0.32.0",
     "datauri": "4.1.0",
     "dompurify": "^3.2.6",
     "electron-clipboard-watcher": "1.0.1",
