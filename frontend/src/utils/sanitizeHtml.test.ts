@@ -19,9 +19,33 @@ describe('sanitizeHtml', () => {
       expect(result).not.toContain('javascript:');
     });
 
-    it('strips inline event handlers', () => {
-      const result = sanitizeHtml('<img src="media://a.png" onerror="alert(1)" />');
-      expect(result).not.toContain('onerror');
+    it.each([
+      ['onerror', '<img src="media://a.png" onerror="alert(1)" />'],
+      ['onload', '<img src="media://a.png" onload="alert(1)" />'],
+      ['onclick', '<a href="https://example.com" onclick="alert(1)">x</a>'],
+      ['onfocus', '<a href="https://example.com" onfocus="alert(1)">x</a>'],
+      [
+        'onmouseover',
+        '<a href="https://example.com" onmouseover="alert(1)">x</a>',
+      ],
+      ['onkeydown', '<a href="https://example.com" onkeydown="alert(1)">x</a>'],
+      ['onsubmit', '<form onsubmit="alert(1)"><input /></form>'],
+    ])('strips %s event handler', (attr, html) => {
+      const result = sanitizeHtml(html);
+      expect(result.toLowerCase()).not.toMatch(new RegExp(`\\s${attr}\\s*=`));
+    });
+
+    it.each([
+      ['javascript:', '<a href="javascript:alert(1)">x</a>'],
+      ['JaVaScRiPt:', '<a href="JaVaScRiPt:alert(1)">x</a>'],
+      ['vbscript:', '<a href="vbscript:msgbox(1)">x</a>'],
+      [
+        'data:text/html',
+        '<a href="data:text/html,%3Cscript%3Ealert(1)%3C/script%3E">x</a>',
+      ],
+    ])('strips dangerous URI scheme: %s', (scheme, html) => {
+      const result = sanitizeHtml(html);
+      expect(result.toLowerCase()).not.toContain(scheme.toLowerCase());
     });
 
     it('preserves http(s) URLs on images', () => {

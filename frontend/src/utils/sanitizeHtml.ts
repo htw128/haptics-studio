@@ -21,6 +21,11 @@ converter.setOption('simpleLineBreaks', true);
  *
  * Any scheme not in this list (e.g. `javascript:`, `data:` for non-images)
  * will have its attribute stripped by DOMPurify, preventing XSS.
+ *
+ * SECURITY: Do NOT add `javascript`, `data`, or `vbscript` to this regex.
+ * The output of this sanitizer is fed directly into `dangerouslySetInnerHTML`
+ * by callers; allowing those schemes would defeat the sanitizer's contract
+ * and enable XSS. Regression tests in `sanitizeHtml.test.ts` lock this down.
  */
 const ALLOWED_URI_REGEXP =
   /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|media):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
