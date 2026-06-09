@@ -240,6 +240,58 @@ describe('utils::duplicatedClipsAndGroups', () => {
     expect(groups[1].clips).toContain(duplicatedClips[0].clipId);
     expect(groups[1].clips).toContain(duplicatedClips[1].clipId);
   });
+
+  test('should handle duplicate when selection contains both group and its clips', () => {
+    // Duplicating again should not create duplicate clips.
+    const c = {
+      c1: {name: 'clip 1', audio: {name: '', path: ''}},
+      c2: {name: 'clip 2', audio: {name: '', path: ''}},
+    };
+    const g: ClipGroup[] = [
+      {id: 'g1', name: 'group 1', isFolder: true, clips: ['c1', 'c2']},
+    ];
+
+    // First duplication: select group g1
+    const result1 = duplicatedClipsAndGroups(
+      {clips: [], groups: ['g1']},
+      g,
+      c as unknown as Record<string, Clip>,
+    );
+
+    expect(result1.duplicatedClips.length).toEqual(2);
+    expect(result1.duplicatedGroups.length).toEqual(1);
+    expect(result1.groups.length).toEqual(2);
+
+    // Build state after first duplication
+    const clipsAfterFirst = {
+      ...c,
+      ...result1.clips,
+    } as unknown as Record<string, Clip>;
+
+    // Second duplication: selection contains BOTH the new group AND its clips
+    // (this is what happens in the UI after first duplication)
+    const selection2 = {
+      clips: result1.duplicatedClips.map(d => d.clipId),
+      groups: result1.duplicatedGroups,
+    };
+
+    const result2 = duplicatedClipsAndGroups(
+      selection2,
+      result1.groups,
+      clipsAfterFirst,
+    );
+
+    // Should only duplicate 2 clips (not 4)
+    expect(result2.duplicatedClips.length).toEqual(2);
+    expect(result2.duplicatedGroups.length).toEqual(1);
+    expect(result2.groups.length).toEqual(3);
+
+    // The new group should have exactly 2 clips
+    const newGroup = result2.groups.find(gr =>
+      result2.duplicatedGroups.includes(gr.id),
+    );
+    expect(newGroup?.clips.length).toEqual(2);
+  });
 });
 
 describe('utils::envelopesFromSelection', () => {

@@ -69,10 +69,17 @@ export const duplicatedClipsAndGroups = (
   const duplicatedGroups: string[] = [];
 
   // Duplicate the selected clips
-  const duplicatedClips = selection.clips
-    .concat(
-      groups.filter(g => selection.groups.includes(g.id)).flatMap(g => g.clips),
-    )
+  // Filter out clips that are part of selected groups to avoid duplication
+  const clipsFromSelectedGroups = groups
+    .filter(g => selection.groups.includes(g.id))
+    .flatMap(g => g.clips);
+  const clipsFromSelectedGroupsSet = new Set(clipsFromSelectedGroups);
+  const selectedClipsNotInGroups = selection.clips.filter(
+    id => !clipsFromSelectedGroupsSet.has(id),
+  );
+
+  const duplicatedClips = selectedClipsNotInGroups
+    .concat(clipsFromSelectedGroups)
     .map(id => {
       const clipId = uuidv4();
       const originalGroup = groups.find(g => g.clips.includes(id));
