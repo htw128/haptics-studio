@@ -119,15 +119,8 @@ function TutorialStepsViewer(props: Props) {
     }
   }, [pageIndex]);
 
-  const preventDefault = React.useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-  }, []);
-
   return (
-    <div
-      className={classes.container}
-      onDragOver={preventDefault}
-      onDrop={preventDefault}>
+    <div className={classes.container}>
       <div style={{flex: 1}}>
         <div
           className={`${classes.preview} markdown scrollbar`}

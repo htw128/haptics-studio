@@ -43,6 +43,14 @@ if (window.process && process.env.NODE_ENV !== 'development') {
   });
 }
 
+// Prevent opening dropped files in a separate window when they land outside a dropzone.
+window.addEventListener('dragover', event => {
+  event.preventDefault();
+});
+window.addEventListener('drop', event => {
+  event.preventDefault();
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   ReactDOM.render(
     <Provider store={state.store}>
