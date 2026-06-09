@@ -273,19 +273,22 @@ export const pastedEnvelopes = (
       if (clipboardStartsBeforeEnvelope) {
         leftCut = 1;
       } else if (leftCut > -1) {
-        // lerp left
+        // lerp left, only when there is a point before the cut to lerp from
         const time = clipboard[0].time - MinimumTimeSpacing;
-        const lerpValue = linearInterpolationForAxisValue(
-          {
-            x: envelope.data[leftCut - 1].time,
-            y: (envelope.data[leftCut - 1] as any)[key],
-          },
-          {
-            x: envelope.data[leftCut].time,
-            y: (envelope.data[leftCut] as any)[key],
-          },
-          time,
-        );
+        const lerpValue =
+          leftCut > 0
+            ? linearInterpolationForAxisValue(
+                {
+                  x: envelope.data[leftCut - 1].time,
+                  y: (envelope.data[leftCut - 1] as any)[key],
+                },
+                {
+                  x: envelope.data[leftCut].time,
+                  y: (envelope.data[leftCut] as any)[key],
+                },
+                time,
+              )
+            : 0;
 
         clipboard = [{time, [key]: lerpValue}, ...clipboard];
       }
@@ -298,43 +301,58 @@ export const pastedEnvelopes = (
       if (clipboardEndsAfterEnvelope) {
         rightCut = envelope.data.length;
       } else if (rightCut > -1) {
-        // lerp right
+        // lerp right, only when there is a point before the cut to lerp from
         const time = clipboard[clipboard.length - 1].time + MinimumTimeSpacing;
-        const lerpValue = linearInterpolationForAxisValue(
-          {
-            x: envelope.data[rightCut - 1].time,
-            y: (envelope.data[rightCut - 1] as any)[key],
-          },
-          {
-            x: envelope.data[rightCut].time,
-            y: (envelope.data[rightCut] as any)[key],
-          },
-          time,
-        );
+        const lerpValue =
+          rightCut > 0
+            ? linearInterpolationForAxisValue(
+                {
+                  x: envelope.data[rightCut - 1].time,
+                  y: (envelope.data[rightCut - 1] as any)[key],
+                },
+                {
+                  x: envelope.data[rightCut].time,
+                  y: (envelope.data[rightCut] as any)[key],
+                },
+                time,
+              )
+            : 0;
 
         clipboard = [...clipboard, {time, [key]: lerpValue}];
       }
 
       // If the clipboard starts after the original envelope ends, there is no need to splice
       // the original data, the envelopes can be joined by adding two new points
-      // with a 0 value to avoid undesired bridges between the two
+      // with a 0 value to avoid undesired bridges between the two.
+      // When the original envelope is empty (e.g. after Select All + Cut), skip the
+      // bridge points so the paste reproduces the cut content as-is.
+      const envelopeWasEmpty = envelope.data.length === 0;
       if (clipboardStartsAfterEnvelope) {
-        envelope.data.push({
-          time:
-            envelope.data.length > 0
-              ? envelope.data[envelope.data.length - 1].time +
-                MinimumTimeSpacing
-              : 0,
-          [key]: 0,
-        });
-        // Add the second point only if there is enough space, if not, the point is not needed
-        if (
-          envelope.data[envelope.data.length - 1].time + MinimumTimeSpacing <
-          clipboard[0].time - MinimumTimeSpacing
-        ) {
+        if (!envelopeWasEmpty) {
           envelope.data.push({
-            time: clipboard[0].time - MinimumTimeSpacing,
+            time:
+              envelope.data[envelope.data.length - 1].time +
+              MinimumTimeSpacing,
             [key]: 0,
+          });
+          // Add the second point only if there is enough space, if not, the point is not needed
+          if (
+            envelope.data[envelope.data.length - 1].time + MinimumTimeSpacing <
+            clipboard[0].time - MinimumTimeSpacing
+          ) {
+            envelope.data.push({
+              time: clipboard[0].time - MinimumTimeSpacing,
+              [key]: 0,
+            });
+          }
+        } else if (clipboard[0].time > 0) {
+          // Keep the envelope valid (must start at time 0) by anchoring a
+          // single point at the origin. Use the clipboard's first value so the
+          // envelope holds that value from the origin until the paste begins,
+          // matching the value the source clip had at its own time 0.
+          envelope.data.push({
+            time: 0,
+            [key]: (envelope.translatedPoints[0] as any)[key],
           });
         }
         envelope.data.push(...clipboard);
@@ -346,6 +364,13 @@ export const pastedEnvelopes = (
       if (clipboardStartsBeforeEnvelope) {
         // Find the two points around the cut and get the interpolated value
         const firstCut = envelope.translatedPoints.indexOf(clipboard[0]) - 1;
+        // For an empty target envelope, only overwrite the time-0 anchor when
+        // the clipboard actually extends past the origin (firstCut >= 0).
+        // Otherwise the anchor pushed above already holds the correct value
+        // and the overwrite would replace it with 0.
+        if (envelopeWasEmpty && firstCut < 0) {
+          return;
+        }
         let lerpValue = 0;
         if (firstCut >= 0 && envelope.translatedPoints.length > 2) {
           lerpValue = linearInterpolationForAxisValue(

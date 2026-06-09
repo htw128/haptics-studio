@@ -466,6 +466,58 @@ describe('utils::pastedEnvelopes', () => {
       ],
     });
   });
+
+  test('should not throw when a destination envelope has points only after the clipboard end (rightCut === 0)', () => {
+    expect(() =>
+      pastedEnvelopes(
+        {
+          amplitude: [],
+          frequency: [
+            {time: 1.0, frequency: 0.5},
+            {time: 1.5, frequency: 0.5},
+          ],
+        },
+        {
+          amplitude: [
+            {time: 0, amplitude: 0.3},
+            {time: 0.5, amplitude: 0.3},
+          ],
+          frequency: [
+            {time: 0, frequency: 0.5},
+            {time: 0.5, frequency: 0.5},
+          ],
+        },
+        0,
+        false,
+      ),
+    ).not.toThrow();
+  });
+
+  test('should not throw when a destination envelope has points only before the clipboard start (leftCut === 0)', () => {
+    expect(() =>
+      pastedEnvelopes(
+        {
+          amplitude: [],
+          frequency: [
+            {time: 0.0, frequency: 0.5},
+            {time: 0.2, frequency: 0.5},
+          ],
+        },
+        {
+          amplitude: [
+            {time: 1.0, amplitude: 0.3},
+            {time: 1.5, amplitude: 0.3},
+          ],
+          frequency: [
+            {time: 1.0, frequency: 0.5},
+            {time: 1.5, frequency: 0.5},
+          ],
+        },
+        1.0,
+        false,
+      ),
+    ).not.toThrow();
+  });
 });
 
 describe('utils::findAdjacentPoints', () => {
