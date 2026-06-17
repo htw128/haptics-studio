@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (c) Meta Platforms, Inc. and affiliates.
+
+  This source code is licensed under the MIT license found in the
+  LICENSE file in the root directory of this source tree.
+-->
+<!--
+  This sample connects to the Haptics Studio desktop over an unencrypted Socket.IO
+  connection (ws://<ip>:9999) on the local network, so cleartext traffic must be
+  permitted. A production app should restrict this to the specific hosts it talks to
+  or use TLS instead.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

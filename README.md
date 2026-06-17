@@ -184,7 +184,8 @@ Haptics-Studio/
 │
 ├── companion/               # Companion apps for device auditioning
 │   ├── quest/               # Unity VR companion (Meta Quest)
-│   └── ios/                 # iOS mobile example
+│   ├── ios/                 # iOS mobile example
+│   └── android/             # Android mobile example
 │
 ├── native/                  # Native Node.js extensions (C++/Rust)
 ├── e2e/                     # End-to-end tests (Playwright)
@@ -298,10 +299,11 @@ Haptics Studio includes companion apps that let you preview ("audition") haptic 
 
 This repository ships two companion apps:
 
-| App                    | Platform   | Technology  | Purpose                                         |
-| :--------------------: | :--------: | :---------: | :---------------------------------------------: |
-| VR Companion App       | Meta Quest | Unity (C\#) | Full-featured auditioning on Quest controllers  |
-| iOS Mobile Example App | iOS        | Swift       | Reference implementation for mobile auditioning |
+| App                        | Platform   | Technology  | Purpose                                         |
+| :------------------------: | :--------: | :---------: | :---------------------------------------------: |
+| VR Companion App           | Meta Quest | Unity (C\#) | Full-featured auditioning on Quest controllers  |
+| iOS Mobile Example App     | iOS        | Swift       | Reference implementation for mobile auditioning |
+| Android Mobile Example App | Android    | Kotlin      | Reference implementation for mobile auditioning |
 
 ### How Desktop and Companion Apps Relate
 
@@ -433,14 +435,14 @@ companion/quest/
 | `HapticStudio`   | C\# data model classes that mirror the desktop's TypeScript models: Clip, AudioData, ClipGroup, Project               |
 | `ClipPlayer`     | Receives clip data from NetworkHandler, passes it to the Haptics SDK for playback on Quest controllers                |
 
-### Mobile Example App (iOS)
+### Mobile Example App
 
-The mobile companion app is an iOS reference implementation at `companion/ios/`. It demonstrates how to:
+The mobile companion app is a reference implementation for iOS (`companion/ios/`) and Android (`companion/android/`). It demonstrates how to:
 
   * Discover a Haptics Studio instance on the local network
   * Connect and authenticate via Socket.IO
   * Request and receive haptic clips
-  * Play haptics using the platform's native API (Core Haptics)
+  * Play haptics using the platform's native API (Core Haptics or Android's Vibrator API)
 
 This is intended as a starting point for developers building their own auditioning tools or integrating Haptics Studio preview into custom workflows.
 
