@@ -8,7 +8,7 @@ Electron desktop app (TypeScript + React 17 + Redux Toolkit + Konva) for designi
 - `frontend/` — Electron renderer (React), Webpack → browser target, dev server on :8080
 - `shared/` — IPC channel names/types/wrappers; imported by both with no separate build
 
-A Rust native addon (`native/bin/mac/{development,production}/HapticsSDK.node`) lives in a git submodule at `third-party/haptics-sdk`.
+A Rust native addon (`native/bin/mac/{development,production}/HapticsSDK.node`) lives in a git submodule at `third-party/haptics-sdk`. macOS builds are **arm64-only** (no x86_64, no universal binary).
 
 ## Prerequisites
 
@@ -95,7 +95,18 @@ Single workflow (`.github/workflows/test.yml`): macOS, Node 24, Rust stable. Run
 
 ## Packaging
 
-Uses `electron-builder`. Platform-specific commands: `yarn build:mac`, `yarn package:mac`, `yarn release:mac` (and `:win` variants). The `main/webpack.config.electron.js` automatically picks `native/bin/{mac,win}/{development,production}/HapticsSDK.node`.
+Uses `electron-builder`. macOS builds are **arm64-only** (see `package.json` → `build.mac.target.arch`).
+
+| Task | Command |
+|------|---------|
+| Build (arm64) | `yarn build:mac` — webpack main + frontend |
+| Package (signed .dmg) | `yarn package:mac` or `yarn buildAndPackage:mac` |
+| Dir package (unsigned .app) | `yarn dirpackage:mac` or `yarn buildAndDirpackage:mac` |
+| Release | `yarn release:mac` |
+
+The unsigned `.app` bundle at `dist/mac-arm64/Haptics Studio.app/` skips code signing entirely (`CSC_IDENTITY_AUTO_DISCOVERY=false`), useful for local iteration.
+
+Windows variants (`:win` suffix) remain x64. The `main/webpack.config.electron.js` automatically picks `native/bin/{mac,win}/{development,production}/HapticsSDK.node`.
 
 ## License header
 
