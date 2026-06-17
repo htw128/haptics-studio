@@ -21,11 +21,11 @@ function updateReleaseNotes(filePath, releaseNotes, channel) {
 
       // Update the file path and the file urls
       ymlContent.files.forEach(file => {
-        file.url = file.url.replace('universal.zip', `universal-${channel}.zip`);
-        file.url = file.url.replace('universal.dmg', `universal-${channel}.dmg`);
+        file.url = file.url.replace('arm64.zip', `arm64-${channel}.zip`);
+        file.url = file.url.replace('arm64.dmg', `arm64-${channel}.dmg`);
         file.url = file.url.replace('x64.exe', `x64-${channel}.exe`);
       });
-      ymlContent.path = ymlContent.path.replace('universal.zip', `universal-${channel}.zip`);
+      ymlContent.path = ymlContent.path.replace('arm64.zip', `arm64-${channel}.zip`);
       ymlContent.path = ymlContent.path.replace('x64.exe', `x64-${channel}.exe`);
 
       fs.writeFileSync(filePath, YAML.stringify(ymlContent));
@@ -70,21 +70,21 @@ const latestMacYmlPath = path.join(distPath, 'latest-mac.yml');
 
 // Add channel name to the artifacts
 const channel = process.env.CHANNEL || 'latest';
-const macZip = path.join(distPath, 'haptic-studio-mac-universal.zip');
+const macZip = path.join(distPath, 'haptic-studio-mac-arm64.zip');
 if (fs.existsSync(macZip)) {
-  fs.renameSync(macZip, path.join(distPath, `haptic-studio-mac-universal-${channel}.zip`));
+  fs.renameSync(macZip, path.join(distPath, `haptic-studio-mac-arm64-${channel}.zip`));
 }
-const macZipBlockmap = path.join(distPath, 'haptic-studio-mac-universal.zip.blockmap');
+const macZipBlockmap = path.join(distPath, 'haptic-studio-mac-arm64.zip.blockmap');
 if (fs.existsSync(macZipBlockmap)) {
-  fs.renameSync(macZipBlockmap, path.join(distPath, `haptic-studio-mac-universal-${channel}.zip.blockmap`));
+  fs.renameSync(macZipBlockmap, path.join(distPath, `haptic-studio-mac-arm64-${channel}.zip.blockmap`));
 }
-const macDmg = path.join(distPath, 'haptic-studio-mac-universal.dmg');
+const macDmg = path.join(distPath, 'haptic-studio-mac-arm64.dmg');
 if (fs.existsSync(macDmg)) {
-  fs.renameSync(macDmg, path.join(distPath, `haptic-studio-mac-universal-${channel}.dmg`));
+  fs.renameSync(macDmg, path.join(distPath, `haptic-studio-mac-arm64-${channel}.dmg`));
 }
-const macDmgBlockmap = path.join(distPath, 'haptic-studio-mac-universal.dmg.blockmap');
+const macDmgBlockmap = path.join(distPath, 'haptic-studio-mac-arm64.dmg.blockmap');
 if (fs.existsSync(macDmgBlockmap)) {
-  fs.renameSync(macDmgBlockmap, path.join(distPath, `haptic-studio-mac-universal-${channel}.dmg.blockmap`));
+  fs.renameSync(macDmgBlockmap, path.join(distPath, `haptic-studio-mac-arm64-${channel}.dmg.blockmap`));
 }
 const winExe = path.join(distPath, 'haptic-studio-win-x64.exe');
 if (fs.existsSync(winExe)) {
