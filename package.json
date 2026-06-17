@@ -13,7 +13,7 @@
     "main:typecheck": "tsc --project ./main/tsconfig.json --noEmit --skipLibCheck",
     "premain:build": "rimraf ./main/dist && mkdirp main/dist",
     "main:build": "yarn samples:generate_metadata && webpack --config main/webpack.config.electron.js --progress",
-    "main:build:mac": "yarn main:build --env platform=darwin --env arch=x64",
+    "main:build:mac": "yarn main:build --env platform=darwin --env arch=arm64",
     "main:build:win": "yarn main:build --env platform=win32 --env arch=x64",
     "main:build:dev": "cross-env NODE_ENV=development yarn main:build",
     "main:build:prod": "cross-env NODE_ENV=production yarn main:build",
@@ -31,14 +31,14 @@
     "build:mac": "yarn main:build:mac && yarn frontend:build",
     "build:win": "yarn main:build:win && yarn frontend:build",
     "build:prod": "cross-env NODE_ENV=production yarn build",
-    "package:mac": "yarn main:package -m --universal",
+    "package:mac": "yarn main:package -m --arm64",
     "package:win": "yarn main:package -w",
     "release:mac": "yarn main:release -m",
     "release:win": "yarn main:release -w",
     "package": "yarn main:package -mw",
     "release": "yarn main:release -mw",
     "dirpackage:win": "electron-builder -w --dir --x64",
-    "dirpackage:mac": "electron-builder -m --dir --universal",
+    "dirpackage:mac": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder -m --dir --arm64",
     "postdirpackage:mac": "cross-env node ./scripts/add_app_update.js",
     "postdirpackage:win": "cross-env node ./scripts/add_app_update.js",
     "custompackage:mac:x64": "electron-builder -m --x64 --prepackaged ./dist/mac",
@@ -48,6 +48,7 @@
     "buildAndPackage": "yarn frontend:build && yarn main:build:mac && yarn package:mac && yarn main:build:win && yarn package:win",
     "buildAndRelease": "yarn frontend:build && yarn main:build:mac && yarn release:mac && yarn main:build:win && yarn release:win",
     "buildAndPackage:mac": "yarn build:mac && yarn package:mac",
+    "buildAndDirpackage:mac": "yarn build:mac && yarn dirpackage:mac",
     "buildAndPackage:win": "yarn build:win && yarn package:win",
     "postinstall": "electron-builder install-app-deps && yarn generate-license && yarn native:build",
     "test:main": "cross-env NODE_ENV=test yarn samples:generate_metadata && jest -c ./main/jest.config.js --runInBand --detectOpenHandles --watch",
@@ -69,9 +70,7 @@
   "napi": {
     "binaryName": "HapticsSDK",
     "targets": [
-      "x86_64-apple-darwin",
       "aarch64-apple-darwin",
-      "universal-apple-darwin",
       "x86_64-pc-windows-msvc"
     ]
   },
@@ -98,11 +97,10 @@
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "mergeASARs": true,
-      "x64ArchFiles": "**/Contents/Resources/bin/**",
       "target": [
         {
           "target": "default",
-          "arch": "universal"
+          "arch": "arm64"
         }
       ]
     },
@@ -232,11 +230,11 @@
     }
   },
   "devDependencies": {
-    "@napi-rs/cli": "^3.6.0",
     "@babel/core": "7.28.4",
     "@babel/preset-env": "7.29.5",
     "@babel/preset-react": "7.27.1",
     "@hot-loader/react-dom": "16.13.0",
+    "@napi-rs/cli": "^3.6.0",
     "@playwright/test": "1.34.3",
     "@testing-library/jest-dom": "5.15.0",
     "@testing-library/react": "10.2.1",

@@ -32,14 +32,14 @@ function writeAppUpdateFile(folder) {
 }
 
 const distPath = process.env.DIST_PATH || path.join('dist');
-const macUniversal = 'mac-universal';
+const macArm64 = 'mac-arm64';
 const appName = `${packageJson.build.productName}.app`;
 const winUnpacked = 'win-unpacked';
 const appUpdateFileName = 'app-update.yml';
 
 const macFolder = path.join(
   distPath,
-  macUniversal,
+  macArm64,
   appName,
   'Contents',
   'Resources',

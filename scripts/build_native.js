@@ -8,8 +8,7 @@
 /**
  * Build script for native extensions using @napi-rs/cli (devDependency).
  *
- * On macOS: builds x64 and arm64 binaries, then combines them into a
- * universal binary via `napi universalize`.
+ * On macOS: builds arm64 binary only.
  * On Windows: builds a single x64 binary.
  * On both: generates TypeScript types via typeshare.
  *
@@ -111,7 +110,6 @@ const cleanupDts = binPath => {
 const buildMacEnvironment = environment => {
   const profile = environment === 'development' ? 'debug' : 'release';
   const binPath = path.resolve(`native/bin/mac/${environment}`);
-  const universalPath = path.join(binPath, 'HapticsSDK.darwin-universal.node');
   const finalPath = path.join(binPath, 'HapticsSDK.node');
 
   if (!forceRebuild && fs.existsSync(finalPath)) {
@@ -121,28 +119,7 @@ const buildMacEnvironment = environment => {
     return;
   }
 
-  // Build both architectures — napi produces HapticsSDK.darwin-x64.node
-  // and HapticsSDK.darwin-arm64.node in the output dir
-  napiBuild(binPath, profile, 'x86_64-apple-darwin', true);
-  napiBuild(binPath, profile, 'aarch64-apple-darwin', true);
-
-  // Combine into HapticsSDK.darwin-universal.node via lipo
-  console.log(
-    `Universalizing -> ${path.relative(process.cwd(), universalPath)}`,
-  );
-  runNapi(['universalize', '--cwd', PROJECT_ROOT, '-o', binPath]);
-
-  // Rename to HapticsSDK.node for the Electron app
-  fs.renameSync(universalPath, finalPath);
-
-  // Clean up arch-specific intermediates from napi build --platform
-  for (const file of [
-    'HapticsSDK.darwin-x64.node',
-    'HapticsSDK.darwin-arm64.node',
-  ]) {
-    const p = path.join(binPath, file);
-    if (fs.existsSync(p)) fs.unlinkSync(p);
-  }
+  napiBuild(binPath, profile, 'aarch64-apple-darwin', false);
 
   cleanupDts(binPath);
 };
@@ -235,13 +212,13 @@ const verifyTools = () => {
     );
   }
 
-  // Ensure both macOS targets are installed (only needed on macOS)
+  // Ensure arm64 macOS target is installed (only needed on macOS)
   if (process.platform === 'darwin') {
     const targets = spawnSync('rustup', ['target', 'list', '--installed'], {
       stdio: 'pipe',
     });
     const installed = targets.stdout.toString();
-    for (const triple of ['x86_64-apple-darwin', 'aarch64-apple-darwin']) {
+    for (const triple of ['aarch64-apple-darwin']) {
       if (!installed.includes(triple)) {
         console.log(`Installing Rust target: ${triple}`);
         run('rustup', ['target', 'add', triple]);
