@@ -411,7 +411,9 @@ function EditablePoints(props: Props) {
     if (p.x < -Constants.plot.point.radius / 2 || p.x > renderMetadata.width)
       return null;
 
-    const isInClosestPointsWindow = mouseInfo.hover.closestPoints.has(index);
+    const isInClosestPointsWindow = mouseInfo.hover.closestPoints.has(
+      point.index,
+    );
     const limitPasteLeft = timeToScreen({x: mask.start, y: 0}, renderMetadata);
     const limitPasteRight = timeToScreen({x: mask.end, y: 0}, renderMetadata);
     const opacity = p.x > limitPasteLeft.x && p.x < limitPasteRight.x ? 0 : 1;
