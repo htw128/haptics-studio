@@ -185,6 +185,7 @@ export default class MainApplication {
       Promise.all([
         ADBDevice.instance.stopDevicePolling(),
         Analytics.instance.stop(),
+        WSServer.instance.stop(),
       ])
         // eslint-disable-next-line no-console
         .catch(console.error)

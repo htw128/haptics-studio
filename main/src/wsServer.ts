@@ -70,23 +70,32 @@ export default class WSServer {
 
   private authCodeTimeout!: ReturnType<typeof setTimeout>;
 
+  private isStopping = false;
+
   /**
    * Starts the UDP advertising that allows Studio to be discvered by HMD
    * Starts the Webscoket server
    */
   public start(): void {
+    this.isStopping = false;
     this.setupUdpAdvertising();
     this.setupWSServer();
   }
 
   /**
    * Stops the UDP advertising
-   * Stops the Webscoket server
+   * Disconnects connected clients and stops the Websocket server.
+   * Resolves once the server has fully closed.
    */
-  public stop(): void {
+  public async stop(): Promise<void> {
+    // Set before disconnecting clients: each client's disconnect handler calls
+    // startUdpAdvertising(), which would otherwise re-create the advertising
+    // interval we are tearing down here.
+    this.isStopping = true;
     clearTimeout(this.authCodeTimeout);
     clearInterval(this.advertisingInterval);
-    this.closeWSServer();
+    this.disconnectAllClients();
+    await this.closeWSServer();
   }
 
   public getIoClient(id: string): Socket | undefined {
@@ -213,11 +222,24 @@ export default class WSServer {
     client?.disconnect();
   }
 
+  /**
+   * Gracefully disconnects every connected client
+   */
+  public disconnectAllClients(): void {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const deviceId of Object.keys(this.ioClients)) {
+      this.ioClients[deviceId]?.client?.disconnect();
+    }
+  }
+
   public getRoomId(): string {
     return this.roomId;
   }
 
   public startUdpAdvertising(): void {
+    if (this.isStopping) {
+      return;
+    }
     clearInterval(this.advertisingInterval);
     this.advertisingInterval = setInterval(() => {
       this.broadcastMessage();
@@ -312,9 +334,19 @@ export default class WSServer {
     Logger.silly('Broadcasted UDP message..');
   }
 
-  private closeWSServer(): void {
-    this.io.close();
-    this.httpServer.close();
+  private closeWSServer(): Promise<void> {
+    return new Promise<void>(resolve => {
+      if (!this.io) {
+        resolve();
+        return;
+      }
+      // io.close() disconnects all clients and closes the underlying HTTP
+      // server. The callback fires once every connection is closed, ensuring
+      // pending frames are flushed before we resolve.
+      this.io.close(() => {
+        resolve();
+      });
+    });
   }
 
   private setupWSServer(): void {
