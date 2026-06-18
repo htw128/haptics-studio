@@ -16,6 +16,7 @@ import {HapticData, VisualWaveform} from '../hapticsSdk';
 import Configs from '../common/configs';
 import Project, {
   AssetFile,
+  Clip,
   ClipGroup,
   ClipMarker,
   OathSettings,
@@ -74,6 +75,83 @@ export interface ClipPayload {
   markers: ClipMarker[];
   lastUpdate: number;
   trimAt?: number;
+}
+
+/**
+ * Returns a destination path inside `dir` for `filename` that does not collide
+ * with an existing file, appending a numeric suffix when needed.
+ * @param dir - The destination directory
+ * @param filename - The desired file name
+ * @returns A non-colliding absolute file path
+ */
+function getUniqueDestinationPath(dir: string, filename: string): string {
+  const ext = path.extname(filename);
+  const base = path.basename(filename, ext);
+  let candidate = path.join(dir, filename);
+  let counter = 1;
+  while (fs.existsSync(candidate)) {
+    candidate = path.join(dir, `${base}-${counter}${ext}`);
+    counter += 1;
+  }
+  return candidate;
+}
+
+/**
+ * When a project originates from a sample, its clip audio assets still point to the
+ * read-only resources/samples folder. Copy those assets next to the destination
+ * project file and relink the clips so the saved project is treated as a regular
+ * custom project instead of staying linked to the sample folder.
+ * @param destinationFile - The destination project file path
+ */
+async function copySampleAssetsToProject(
+  destinationFile: string,
+): Promise<void> {
+  const copyFile = promisify(fs.copyFile);
+  const resourcesPath = PathManager.instance.getResourcesPath();
+  const samplesPath = PathManager.instance.getSamplesPath();
+  const destinationDir = path.dirname(destinationFile);
+  const clips = Project.instance.getClips();
+  // Reuse the destination for assets that are referenced by multiple clips
+  const copiedAssets = new Map<string, string>();
+
+  for (let index = 0; index < clips.length; index += 1) {
+    const clip = clips[index];
+    const audioPath = clip.audioAsset?.path;
+    const isSampleAsset =
+      !isNil(audioPath) &&
+      path.isAbsolute(audioPath) &&
+      (audioPath.startsWith(resourcesPath) ||
+        audioPath.startsWith(samplesPath));
+
+    if (!isSampleAsset || !fs.existsSync(audioPath)) {
+      continue;
+    }
+
+    let destinationAudioPath = copiedAssets.get(audioPath);
+    if (isNil(destinationAudioPath)) {
+      destinationAudioPath = getUniqueDestinationPath(
+        destinationDir,
+        path.basename(audioPath),
+      );
+      await copyFile(audioPath, destinationAudioPath);
+      copiedAssets.set(audioPath, destinationAudioPath);
+    }
+
+    const updatedClip: Clip = {
+      ...clip,
+      audioAsset: {...clip.audioAsset, path: destinationAudioPath},
+    };
+    if (updatedClip.haptic?.metadata) {
+      updatedClip.haptic = {
+        ...updatedClip.haptic,
+        metadata: {
+          ...updatedClip.haptic.metadata,
+          source: destinationAudioPath,
+        },
+      };
+    }
+    Project.instance.updateClip(clip.clipId, updatedClip);
+  }
 }
 
 /**
@@ -161,6 +239,13 @@ export async function saveProject(
     const isAuthoringTutorial = isCustomTutorial(projectFile);
 
     if (Project.instance.hasContent()) {
+      // Skip tutorials (assets are handled via the tutorial assets folder) and the
+      // samples folder itself. For any other destination, relink clips whose audio
+      // still lives in the read-only resources/samples folder by copying those assets
+      // next to the destination, so a saved sample is no longer treated as a sample.
+      if (!isSampleProject(projectFile)) {
+        await copySampleAssetsToProject(projectFile);
+      }
       // Force persisting the project content on destination
       await Project.instance.save(projectFile);
       // Set the project dir as the new home
