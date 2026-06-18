@@ -5,7 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import path from 'path';
 import {v4 as uuidv4} from 'uuid';
 import {webUtils} from 'electron';
 
@@ -77,44 +76,41 @@ export const analysisReducers = {
       action: PayloadAction<{
         silent: boolean;
         data: AnalysisRequest;
+        folders: Record<string, string | undefined>;
         settings: ParameterValues;
       }>,
     ) {
-      const folders: Record<string, string[]> = {};
-      const {data} = action.payload;
-      Object.keys(data).forEach(k => {
-        const pathComponents: string[] = data[k].path.split(path.sep);
-        let root = 'root';
-        if (pathComponents.length > 2) {
-          root = pathComponents[pathComponents.length - 2];
-        }
-        if (folders[root]) {
-          folders[root].push(k);
-        } else {
-          folders[root] = [k];
-        }
-      });
+      const {data, folders} = action.payload;
 
-      let groups: ClipGroup[] = [];
-      if (Object.keys(folders).length === 1) {
-        groups = Object.keys(data).map(k => {
-          return {
+      // Each file carries an explicit source folder (the dropped folder name, or
+      // the folder selected from the file dialog). Files with a folder are grouped
+      // together under a folder group; files without one become root-level clips.
+      const groups: ClipGroup[] = [];
+      const folderGroups: Record<string, ClipGroup> = {};
+      Object.keys(data).forEach(k => {
+        const folder = folders?.[k];
+        if (folder) {
+          if (folderGroups[folder]) {
+            folderGroups[folder].clips.push(k);
+          } else {
+            const group: ClipGroup = {
+              id: uuidv4(),
+              isFolder: true,
+              name: folder,
+              clips: [k],
+            };
+            folderGroups[folder] = group;
+            groups.push(group);
+          }
+        } else {
+          groups.push({
             id: uuidv4(),
             isFolder: false,
             name: undefined,
             clips: [k],
-          };
-        });
-      } else {
-        groups = Object.keys(folders).map(k => {
-          return {
-            id: uuidv4(),
-            isFolder: true,
-            name: k,
-            clips: folders[k],
-          };
-        });
-      }
+          });
+        }
+      });
 
       const currentClip = Object.keys(data)[0];
       return {
@@ -132,6 +128,7 @@ export const analysisReducers = {
     },
     prepare: (params: {files: File[]; settings: ParameterValues}) => {
       const data: AnalysisRequest = {};
+      const folders: Record<string, string | undefined> = {};
       params.files.forEach((f: File) => {
         let filePath;
         if (process.env.NODE_ENV === 'test') {
@@ -143,14 +140,18 @@ export const analysisReducers = {
             filePath = (f as any).path;
           }
         }
-        data[uuidv4()] = {
+        const id = uuidv4();
+        data[id] = {
           path: filePath,
         };
+        const folder = (f as {folder?: string | null}).folder;
+        folders[id] = folder == null ? undefined : folder;
       });
 
       return {
         payload: {
           data,
+          folders,
           settings: params.settings,
           silent: false,
         },

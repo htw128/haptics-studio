@@ -139,20 +139,76 @@ describe('project slice', () => {
   });
 
   describe('analyzeFiles', () => {
-    it('should add the new clips and set the current clip', () => {
+    it('should add loose files as root-level clips', () => {
       store.dispatch(
         projectSlice.actions.analyzeFiles({
           files: [
-            {name: 'file1', path: '/folder/file1.wav'} as any as File,
-            {name: 'file2', path: '/folder/file2.wav'} as any as File,
+            {name: 'file1', path: 'file1.wav'} as any as File,
+            {name: 'file2', path: 'file2.wav'} as any as File,
           ],
           settings: defaultDspSettings(),
         }),
       );
       const state = (store.getState() as RootState).project;
       expect(state.groups.length).toEqual(5);
+      expect(state.groups[3].isFolder).toBe(false);
+      expect(state.groups[4].isFolder).toBe(false);
+      expect(state.groups[3].clips.length).toEqual(1);
       expect(state.currentClipId).toEqual(state.groups[3].clips[0]);
       expect(state.selection.clips).toEqual([state.groups[3].clips[0]]);
+    });
+
+    it('should group a single dropped folder under one folder group', () => {
+      store.dispatch(
+        projectSlice.actions.analyzeFiles({
+          files: [
+            {name: 'file1', path: 'file1.wav', folder: '01_creepy'} as any,
+            {name: 'file2', path: 'file2.wav', folder: '01_creepy'} as any,
+          ],
+          settings: defaultDspSettings(),
+        }),
+      );
+      const state = (store.getState() as RootState).project;
+      expect(state.groups.length).toEqual(4);
+      expect(state.groups[3].isFolder).toBe(true);
+      expect(state.groups[3].name).toEqual('01_creepy');
+      expect(state.groups[3].clips.length).toEqual(2);
+      expect(state.currentClipId).toEqual(state.groups[3].clips[0]);
+    });
+
+    it('should create a folder group for each dropped folder', () => {
+      store.dispatch(
+        projectSlice.actions.analyzeFiles({
+          files: [
+            {name: 'file1', path: 'file1.wav', folder: 'folderA'} as any,
+            {name: 'file2', path: 'file2.wav', folder: 'folderB'} as any,
+          ],
+          settings: defaultDspSettings(),
+        }),
+      );
+      const state = (store.getState() as RootState).project;
+      expect(state.groups.length).toEqual(5);
+      expect(state.groups[3].isFolder).toBe(true);
+      expect(state.groups[3].name).toEqual('folderA');
+      expect(state.groups[4].isFolder).toBe(true);
+      expect(state.groups[4].name).toEqual('folderB');
+    });
+
+    it('should mix root clips and folder groups for files dropped with folders', () => {
+      store.dispatch(
+        projectSlice.actions.analyzeFiles({
+          files: [
+            {name: 'root', path: 'root.wav'} as any as File,
+            {name: 'inFolder', path: 'inFolder.wav', folder: 'folderA'} as any,
+          ],
+          settings: defaultDspSettings(),
+        }),
+      );
+      const state = (store.getState() as RootState).project;
+      expect(state.groups.length).toEqual(5);
+      expect(state.groups[3].isFolder).toBe(false);
+      expect(state.groups[4].isFolder).toBe(true);
+      expect(state.groups[4].name).toEqual('folderA');
     });
   });
 

@@ -242,14 +242,20 @@ describe('files listeners', () => {
 
     it('should return the list of wav files', () => {
       const files: FileContent[] = [
-        {path: path.join(mocksPath, 'folder1', 'file2.wav'), name: 'file2.wav'},
+        {
+          path: path.join(mocksPath, 'folder1', 'file2.wav'),
+          name: 'file2.wav',
+          folder: 'folder1',
+        },
         {
           path: path.join(mocksPath, 'folder1', 'folder2', 'file3.mp3'),
           name: 'file3.mp3',
+          folder: 'folder1',
         },
         {
           path: path.join(mocksPath, 'folder3', 'folder4', 'file4.wav'),
           name: 'file4.wav',
+          folder: null,
         },
       ];
       const expectedOutput = {files};

@@ -60,12 +60,17 @@ export function addFiles(
     for (const selectedPath of selectedPaths) {
       const isDirectory = fs.lstatSync(selectedPath).isDirectory();
       if (isDirectory) {
+        const folder = path.basename(selectedPath);
         const dirFiles = getAudioFiles(selectedPath).map(f => {
-          return {path: f, name: path.basename(f)};
+          return {path: f, name: path.basename(f), folder};
         });
         files.push(...dirFiles);
       } else {
-        files.push({path: selectedPath, name: path.basename(selectedPath)});
+        files.push({
+          path: selectedPath,
+          name: path.basename(selectedPath),
+          folder: null,
+        });
       }
     }
     response.payload = {files};
