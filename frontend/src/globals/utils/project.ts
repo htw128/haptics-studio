@@ -178,12 +178,53 @@ export const duplicatedClipsAndGroups = (
   };
 };
 
+/**
+ * Derive the dropped folder name for a dragged file using the relative path that
+ * react-dropzone (file-selector) sets on it. For loose files the relative path is
+ * just the file name (`clip.wav`), so it matches `fileName`. For files dropped
+ * inside a folder the relative path is the folder-prefixed path
+ * (`/myFolder/clip.wav`, or `/myFolder/sub/clip.wav` for nested content), which
+ * differs from `fileName`. We only treat a file as grouped when the relative path
+ * actually carries a folder prefix, and everything inside a dropped folder is
+ * flattened into a single group named after the top-level folder (max 1 level of
+ * grouping).
+ * @param relativePath the relative path set by react-dropzone
+ * @param fileName the file name (used to detect loose files)
+ * @returns the top-level folder name, or undefined for loose files
+ */
+export const folderFromDroppedFile = (
+  relativePath: string | undefined,
+  fileName: string,
+): string | undefined => {
+  // A loose file has no folder prefix: file-selector sets its path to the bare
+  // file name. Anything where the path equals the name (including absolute paths
+  // used as names in tests) is a root-level file.
+  if (typeof relativePath !== 'string' || relativePath === fileName) {
+    return undefined;
+  }
+  const segments = relativePath.split('/').filter(Boolean);
+  return segments.length > 1 ? segments[0] : undefined;
+};
+
 export const analyzeFiles = (
   files: File[],
   dispatch: Dispatch<AnyAction>,
   actions: State['actionCreators'],
 ): void => {
   if (files.length === 0) return;
+
+  // Drag & dropped files are real File instances carrying a relative path from
+  // react-dropzone. Tag each with the folder it came from so the reducer can
+  // group them. Files coming from the native file dialog are plain objects that
+  // already carry an explicit `folder`, so they are left untouched here.
+  files.forEach(f => {
+    if (f instanceof File && !('folder' in f)) {
+      (f as {folder?: string}).folder = folderFromDroppedFile(
+        (f as {path?: string}).path,
+        f.name,
+      );
+    }
+  });
 
   const sortedFiles = files.sort((a, b) => a.name.localeCompare(b.name));
   dispatch(

@@ -41,6 +41,11 @@ export {
 
 export {editorDataFromHaptic, timelineFor, clipDuration} from './hapticData';
 
-export {getUniqueName, duplicatedClipsAndGroups, analyzeFiles} from './project';
+export {
+  getUniqueName,
+  duplicatedClipsAndGroups,
+  analyzeFiles,
+  folderFromDroppedFile,
+} from './project';
 
 export {mediaPath} from './url';

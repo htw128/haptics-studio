@@ -23,6 +23,7 @@ import {
   findAdjacentPoints,
   plotHoverState,
   getUniqueName,
+  folderFromDroppedFile,
   timeFromString,
   timeFormat,
 } from './utils';
@@ -291,6 +292,32 @@ describe('utils::duplicatedClipsAndGroups', () => {
       result2.duplicatedGroups.includes(gr.id),
     );
     expect(newGroup?.clips.length).toEqual(2);
+  });
+});
+
+describe('utils::folderFromDroppedFile', () => {
+  test('returns undefined for a loose file (path equals name)', () => {
+    expect(folderFromDroppedFile('clip.wav', 'clip.wav')).toBeUndefined();
+  });
+
+  test('returns the folder name for a file inside a dropped folder', () => {
+    expect(folderFromDroppedFile('/base/clip.wav', 'clip.wav')).toEqual('base');
+  });
+
+  test('flattens nested folders to the top-level folder', () => {
+    expect(folderFromDroppedFile('/base/sub/clip.wav', 'clip.wav')).toEqual(
+      'base',
+    );
+  });
+
+  test('treats an absolute path used as the file name as a loose file', () => {
+    const absolute = '/Users/someone/e2e/test/test.wav';
+    expect(folderFromDroppedFile(absolute, absolute)).toBeUndefined();
+  });
+
+  test('returns undefined when the path is missing', () => {
+    expect(folderFromDroppedFile(undefined, 'clip.wav')).toBeUndefined();
+    expect(folderFromDroppedFile('', 'clip.wav')).toBeUndefined();
   });
 });
 

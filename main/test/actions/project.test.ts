@@ -398,6 +398,78 @@ describe('actions', () => {
         expect(response.action).toEqual(testAction);
       });
     });
+
+    describe('when saving a sample project to a new destination', () => {
+      const samplesDir = path.join(projectMock.tmpPath, 'samples');
+      const sampleAudioName = 'sample-audio.wav';
+      const sampleAudioPath = path.join(samplesDir, sampleAudioName);
+      const copiedAudioPath = path.join(
+        projectMock.projectDir,
+        sampleAudioName,
+      );
+
+      beforeEach(async () => {
+        fs.mkdirSync(samplesDir, {recursive: true});
+        fs.writeFileSync(sampleAudioPath, 'sample-audio');
+
+        const sampleClip = {
+          ...projectMock.clip,
+          audioAsset: {path: sampleAudioPath},
+        };
+        Project.instance.loadContent({
+          ...lodash.cloneDeep(projectMock.defautProjectContent),
+          clips: [sampleClip],
+          state: {clipId: sampleClip.clipId, sessionId: projectMock.sessionId},
+        });
+
+        jest
+          .spyOn(PathManager.instance, 'getResourcesPath')
+          .mockReturnValue(samplesDir);
+        jest
+          .spyOn(PathManager.instance, 'getSamplesPath')
+          .mockReturnValue(samplesDir);
+        jest
+          .spyOn(Project.instance, 'getName')
+          .mockReturnValue(projectMock.name);
+        jest.spyOn(Project.instance, 'save').mockResolvedValue(true);
+        jest.spyOn(Configs.instance, 'setCurrentProject').mockImplementation();
+        jest.spyOn(Configs.instance, 'addRecentProject').mockImplementation();
+        jest.spyOn(Configs.instance, 'getCurrentProject').mockReturnValue({
+          tmpProjectFile: projectMock.tmpProjectFile,
+          name: projectMock.name,
+          dirty: true,
+        } as unknown as CurrentProject);
+        jest.spyOn(WSServer.instance, 'sendCurrentProject').mockReturnValue();
+        jest
+          .spyOn(dialog, 'showSaveDialogSync')
+          .mockReturnValue(projectMock.projectFile);
+        jest
+          .spyOn(MainApplication.instance, 'getMainWindow')
+          .mockReturnValue({} as unknown as BrowserWindow);
+
+        response = await Actions.saveProject(testAction, true);
+      });
+
+      afterEach(async () => {
+        const rm = promisify(rimraf);
+        await rm(samplesDir);
+      });
+
+      it('should return ok message', () => {
+        expect(response.status).toEqual('ok');
+        expect(response.action).toEqual(testAction);
+      });
+
+      it('should copy the sample audio next to the destination', () => {
+        expect(fs.existsSync(copiedAudioPath)).toBeTruthy();
+      });
+
+      it('should relink the clip audio to the copied asset', () => {
+        const [clip] = Project.instance.getClips();
+        expect(clip.audioAsset?.path).toEqual(copiedAudioPath);
+        expect(clip.audioAsset?.path?.startsWith(samplesDir)).toBeFalsy();
+      });
+    });
   });
 
   describe('cloneProject', () => {

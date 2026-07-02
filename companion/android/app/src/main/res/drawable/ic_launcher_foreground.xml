@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (c) Meta Platforms, Inc. and affiliates.
+
+  This source code is licensed under the MIT license found in the
+  LICENSE file in the root directory of this source tree.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#2D88FF"
+        android:pathData="M28,44 H35 V64 H28 Z" />
+    <path
+        android:fillColor="#2D88FF"
+        android:pathData="M40,34 H47 V74 H40 Z" />
+    <path
+        android:fillColor="#2D88FF"
+        android:pathData="M52,24 H59 V84 H52 Z" />
+    <path
+        android:fillColor="#2D88FF"
+        android:pathData="M64,34 H71 V74 H64 Z" />
+    <path
+        android:fillColor="#2D88FF"
+        android:pathData="M76,44 H83 V64 H76 Z" />
+</vector>

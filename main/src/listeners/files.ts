@@ -20,6 +20,7 @@ export interface FileSelectedMessage {
 export interface FileContent {
   path: string;
   name: string;
+  folder?: string | null;
 }
 
 export interface AddFilesMessage {
@@ -34,12 +35,15 @@ export interface OpenFolderMessage {
  * Loads sample projects
  */
 function handleSamples(): void {
-  createIPCHandler<void, {samples: ProjectMetadata[]}>(IpcInvokeChannel.Samples, () => {
-    const samples = Configs.getSamplesProjects().sort((a, b) => {
-      return (a.order ?? 0) - (b.order ?? 0);
-    });
-    return {payload: {samples}};
-  });
+  createIPCHandler<void, {samples: ProjectMetadata[]}>(
+    IpcInvokeChannel.Samples,
+    () => {
+      const samples = Configs.getSamplesProjects().sort((a, b) => {
+        return (a.order ?? 0) - (b.order ?? 0);
+      });
+      return {payload: {samples}};
+    },
+  );
 }
 
 /**
@@ -75,9 +79,12 @@ function handleRecentProjects(): void {
  * Validates a selected file from the UI
  */
 function fileSelected(): void {
-  createIPCHandler<FileSelectedMessage>(IpcInvokeChannel.FileSelected, async args => {
-    await verifyAudioFile(args.file);
-  });
+  createIPCHandler<FileSelectedMessage>(
+    IpcInvokeChannel.FileSelected,
+    async args => {
+      await verifyAudioFile(args.file);
+    },
+  );
 }
 
 /**
@@ -93,9 +100,12 @@ function openProject(): void {
  * Opens the system folder at the given path
  */
 function openSystemFolderAt(): void {
-  createIPCListener<OpenFolderMessage>(IpcSendChannel.OpenSystemFolderAt, args => {
-    shell.showItemInFolder(args.path);
-  });
+  createIPCListener<OpenFolderMessage>(
+    IpcSendChannel.OpenSystemFolderAt,
+    args => {
+      shell.showItemInFolder(args.path);
+    },
+  );
 }
 
 /**
